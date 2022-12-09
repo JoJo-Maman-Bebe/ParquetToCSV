@@ -5,6 +5,8 @@ using ChoETL;
 using System.IO;
 using FileReaderAPI.Models;
 using FileReaderAPI.Helpers;
+using System.Data.SqlClient;
+using System.Data;
 
 namespace FileReaderAPI.Controllers
 {
@@ -14,6 +16,62 @@ namespace FileReaderAPI.Controllers
 		public string storeNumber;
 		public bool stopReader = false;
 
+		[HttpGet]
+		[Route("MemberContact")]
+		public IHttpActionResult CreateMemberContactParquet()
+		{
+
+			List<MemberContactModel> memberContactList = new List<MemberContactModel>();
+			DatabaseHelper dbHelper = new DatabaseHelper();
+
+			using (SqlConnection connection = new SqlConnection(dbHelper.GetConnString("NextReportDb", "wh")))
+			{
+
+				SqlCommand command = dbHelper.CommandGeneratorStoredProcedure("GetMemberContacts", connection);
+				using (var reader = dbHelper.ExecuteCommandReader(command))
+				{
+					while (reader.Read())
+					{
+						memberContactList.Add(GetMemberContactData(reader));
+					}
+
+				}
+
+				using (var parser = new ChoParquetWriter("C:\\JoJo Maman Bébé\\NEXT\\MemberContact2022.parquet"))
+				{
+					
+					parser.Write(memberContactList);
+				}
+			}
+
+			return Ok("Success");
+		}
+
+		private MemberContactModel GetMemberContactData(IDataReader reader)
+		{
+			return new MemberContactModel()
+			{
+				AccountNumber = Convert.ToString(reader["Account No_"]),
+				FirstName = Convert.ToString(reader["First Name"]),
+				Surname = Convert.ToString(reader["Surname"]),
+				Address = Convert.ToString(reader["Address"]),
+				Address2 = Convert.ToString(reader["Address 2"]),
+				City = Convert.ToString(reader["City"]),
+				PostCode = Convert.ToString(reader["Post Code"]),
+				Email = Convert.ToString(reader["E-Mail"]),
+				PhoneNumber = Convert.ToString(reader["Phone No_"]),
+				MobilePhoneNumber = Convert.ToString(reader["Mobile Phone No_"]),
+				Country = Convert.ToString(reader["Country"]),
+				ContactViaEmail = Convert.ToBoolean(reader["Contact Via Email"]),
+				ContactViaPhone = Convert.ToBoolean(reader["Contact Via Telephone"]),
+				ContactViaPost = Convert.ToBoolean(reader["Contact Via Post"]),
+				BlockAllContact = Convert.ToBoolean(reader["Block All Contact"])
+
+
+
+			};
+
+		}
 
 		[HttpGet]
 		[Route("740Transactions")]
@@ -99,6 +157,8 @@ namespace FileReaderAPI.Controllers
 			return Ok("Successful");
 				
 			}
+
+
 
 
 
