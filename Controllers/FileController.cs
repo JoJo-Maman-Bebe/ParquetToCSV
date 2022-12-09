@@ -17,7 +17,7 @@ namespace FileReaderAPI.Controllers
 		public bool stopReader = false;
 
 		[HttpGet]
-		[Route("MemberContact")]
+		[Route("MemberContacts")]
 		public IHttpActionResult CreateMemberContactParquet()
 		{
 
