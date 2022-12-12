@@ -201,6 +201,7 @@
     <Compile Include="Helpers\DatabaseHelper.cs" />
     <Compile Include="Helpers\ModelInsertHelper.cs" />
     <Compile Include="Models\BankingOverShortModel.cs" />
+    <Compile Include="Models\ItemOptionBarcodeModel.cs" />
     <Compile Include="Models\ItemPromotionModel.cs" />
     <Compile Include="Models\MemberContactModel.cs" />
     <Compile Include="Models\StkBranchBalDailyModel.cs" />

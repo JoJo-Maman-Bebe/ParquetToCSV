@@ -11,6 +11,25 @@ namespace FileReaderAPI.Helpers
 	public class ModelInsertHelper
 
 	{
+		public void InsertItemOptionBarcode(ItemOptionBarcodeModel itemOptionBarcodeModel)
+		{
+			DatabaseHelper dbHelper = new DatabaseHelper();
+
+			string ConnectionString = GetConnString("NextReportDb", "wh");
+
+			using (SqlConnection connection = new SqlConnection(ConnectionString))
+			{
+				SqlCommand command = dbHelper.CommandGeneratorStoredProcedure("InsertItemOptionBarcode", connection);
+				command.Parameters.Add(new SqlParameter("@RowID", itemOptionBarcodeModel.RowID));
+				command.Parameters.Add(new SqlParameter("@ItemNumber", itemOptionBarcodeModel.ItemNumber));
+				command.Parameters.Add(new SqlParameter("@OptionNumber", itemOptionBarcodeModel.OptionNumber));
+				command.Parameters.Add(new SqlParameter("@IsDeleted", itemOptionBarcodeModel.IsDeleted));
+				command.Parameters.Add(new SqlParameter("@FulfilCoArticleId", itemOptionBarcodeModel.FulfilCoArticleId));
+				dbHelper.ExecuteCommandNonQuery(command);
+			}
+
+
+		}
 		public void InsertTenders(TenderModel tenderModel)
 		{
 			DatabaseHelper dbHelper = new DatabaseHelper();
