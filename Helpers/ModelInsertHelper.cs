@@ -10,7 +10,29 @@ namespace FileReaderAPI.Helpers
 {
 	public class ModelInsertHelper
 
+
 	{
+
+		public void InsertDgArea(DgAreaModel dgAreaModel)
+		{
+			DatabaseHelper dbHelper = new DatabaseHelper();
+
+			string ConnectionString = GetConnString("NextReportDb", "wh");
+
+			using (SqlConnection connection = new SqlConnection(ConnectionString))
+			{
+				SqlCommand command = dbHelper.CommandGeneratorStoredProcedure("InsertDgArea", connection);
+				command.Parameters.Add(new SqlParameter("@AreaCode", dgAreaModel.AreaCode));
+				command.Parameters.Add(new SqlParameter("@AreaDesc", dgAreaModel.AreaDesc));
+				command.Parameters.Add(new SqlParameter("@RegionCode", dgAreaModel.RegionCode));
+				command.Parameters.Add(new SqlParameter("@AreaManager", dgAreaModel.AreaManager));
+				command.Parameters.Add(new SqlParameter("@PartnerCode", dgAreaModel.PartnerCode));
+				dbHelper.ExecuteCommandNonQuery(command);
+			}
+
+
+		}
+
 		public void InsertItemOptionBarcode(ItemOptionBarcodeModel itemOptionBarcodeModel)
 		{
 			DatabaseHelper dbHelper = new DatabaseHelper();
