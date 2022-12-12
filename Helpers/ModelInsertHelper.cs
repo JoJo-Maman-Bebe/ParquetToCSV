@@ -11,6 +11,42 @@ namespace FileReaderAPI.Helpers
 	public class ModelInsertHelper
 
 	{
+		public void InsertTransactions(TransactionModel transactionModel)
+		{
+			DatabaseHelper dbHelper = new DatabaseHelper();
+
+			string ConnectionString = GetConnString("NextReportDb", "wh");
+
+			using (SqlConnection connection = new SqlConnection(ConnectionString))
+			{
+				SqlCommand command = dbHelper.CommandGeneratorStoredProcedure("InsertTransactions", connection);
+				command.Parameters.Add(new SqlParameter("@TransNo", transactionModel.TransNo));
+				command.Parameters.Add(new SqlParameter("@TransID", transactionModel.TransID));
+				command.Parameters.Add(new SqlParameter("@NoItems", transactionModel.NoItems));
+				command.Parameters.Add(new SqlParameter("@CompanyInd", transactionModel.CompanyInd));
+				command.Parameters.Add(new SqlParameter("@BranchCode", transactionModel.BranchCode));
+				command.Parameters.Add(new SqlParameter("@PcNumber", transactionModel.PcNumber));
+				command.Parameters.Add(new SqlParameter("@TillNumber", transactionModel.TillNumber));
+				command.Parameters.Add(new SqlParameter("@TransDate", transactionModel.TransDate));
+				command.Parameters.Add(new SqlParameter("@TransTime", transactionModel.TransTime));
+				command.Parameters.Add(new SqlParameter("@SalePerson", transactionModel.SalesPerson));
+				command.Parameters.Add(new SqlParameter("@SalesAsstNo", transactionModel.SalesAsstNo));
+				command.Parameters.Add(new SqlParameter("@VoidIndicator", transactionModel.VoidIndicator));
+				command.Parameters.Add(new SqlParameter("@TaxFreeIndicator", transactionModel.TaxFreeIndicator));
+				command.Parameters.Add(new SqlParameter("@TransSaleValue", transactionModel.TransSaleValue));
+				command.Parameters.Add(new SqlParameter("@TransSaleValueBc", transactionModel.TransSaleValueBc));
+				command.Parameters.Add(new SqlParameter("@TransRealValue", transactionModel.TransRealValue));
+				command.Parameters.Add(new SqlParameter("@TransRealValueBc", transactionModel.TransRealValueBc));
+				command.Parameters.Add(new SqlParameter("@TransRevenue", transactionModel.TransRevenue));
+				command.Parameters.Add(new SqlParameter("@TransRevenueBc", transactionModel.TransRevenueBc));
+				command.Parameters.Add(new SqlParameter("@NoSaleReason", transactionModel.NoSaleReason));
+				command.Parameters.Add(new SqlParameter("@TbvFlag", transactionModel.TbvFlag));
+				command.Parameters.Add(new SqlParameter("@PartnerCode", transactionModel.PartnerCode));
+				dbHelper.ExecuteCommandNonQuery(command);
+			}
+
+
+		}
 		public void InsertStkMovement(StkMovementModel stkMovementModel)
 		{
 			DatabaseHelper dbHelper = new DatabaseHelper();
