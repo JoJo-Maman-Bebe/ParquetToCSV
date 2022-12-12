@@ -11,6 +11,25 @@ namespace FileReaderAPI.Helpers
 	public class ModelInsertHelper
 
 	{
+		public void InsertTenders(TenderModel tenderModel)
+		{
+			DatabaseHelper dbHelper = new DatabaseHelper();
+
+			string ConnectionString = GetConnString("NextReportDb", "wh");
+
+			using (SqlConnection connection = new SqlConnection(ConnectionString))
+			{
+				SqlCommand command = dbHelper.CommandGeneratorStoredProcedure("InsertTenders", connection);
+				command.Parameters.Add(new SqlParameter("@TenderNo", tenderModel.TenderNo));
+				command.Parameters.Add(new SqlParameter("@TransNo", tenderModel.TransNo));
+				command.Parameters.Add(new SqlParameter("@TenderType", tenderModel.TenderType));
+				command.Parameters.Add(new SqlParameter("@TenderAmount", tenderModel.TenderAmount));
+				command.Parameters.Add(new SqlParameter("@TenderAmountBc", tenderModel.TenderAmountBc));
+				dbHelper.ExecuteCommandNonQuery(command);
+			}
+
+
+		}
 		public void InsertTransactions(TransactionModel transactionModel)
 		{
 			DatabaseHelper dbHelper = new DatabaseHelper();

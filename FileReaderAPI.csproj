@@ -206,6 +206,7 @@
     <Compile Include="Models\StkBranchBalDailyModel.cs" />
     <Compile Include="Models\StkMovementModel.cs" />
     <Compile Include="Models\StocktakeModel.cs" />
+    <Compile Include="Models\TenderModel.cs" />
     <Compile Include="Models\TillCountDetailsEventModel.cs" />
     <Compile Include="Models\TransactionModel.cs" />
     <Compile Include="Models\Warehouse740TransactionModel.cs" />
