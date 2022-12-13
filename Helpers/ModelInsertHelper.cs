@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Web;
 using FileReaderAPI.Models;
+using System.Reflection;
 
 
 namespace FileReaderAPI.Helpers
@@ -13,6 +14,71 @@ namespace FileReaderAPI.Helpers
 
 	{
 
+		public void RunSPForModel(object obj, string spName)
+		{
+			DatabaseHelper dbHelper = new DatabaseHelper();
+
+			string ConnectionString = GetConnString("NextReportDb", "wh");
+
+
+			using (SqlConnection connection = new SqlConnection(ConnectionString))
+			{
+				SqlCommand command = dbHelper.CommandGeneratorStoredProcedure(spName, connection);
+
+				PropertyInfo[] properties = obj.GetType().GetProperties();
+				foreach (PropertyInfo p in properties)
+				{
+					var fieldval = p.GetValue(obj);
+					if (fieldval != null)
+					{
+						command.Parameters.Add(new SqlParameter("@" + p.Name, p.GetValue(obj)));
+					}
+					else
+					{
+						command.Parameters.Add(new SqlParameter("@" + p.Name, ""));
+					}
+
+
+				}
+				dbHelper.ExecuteCommandNonQuery(command);
+			}
+
+
+		}
+
+
+
+		public void InsertDgBranch(DgBranchModel dgBranchModel)
+		{
+			DatabaseHelper dbHelper = new DatabaseHelper();
+
+			string ConnectionString = GetConnString("NextReportDb", "wh");
+			
+
+			using (SqlConnection connection = new SqlConnection(ConnectionString))
+			{
+				SqlCommand command = dbHelper.CommandGeneratorStoredProcedure("InsertDgBranch", connection);
+
+				PropertyInfo[] properties = dgBranchModel.GetType().GetProperties();
+				foreach (PropertyInfo p in properties)
+				{
+					var fieldval = p.GetValue(dgBranchModel);
+					if(fieldval != null)
+					{
+						command.Parameters.Add(new SqlParameter("@" + p.Name, p.GetValue(dgBranchModel)));
+					}
+					else
+					{
+						command.Parameters.Add(new SqlParameter("@" + p.Name,""));
+					}
+					
+
+				}
+				dbHelper.ExecuteCommandNonQuery(command);
+			}
+
+
+		}
 		public void InsertDgArea(DgAreaModel dgAreaModel)
 		{
 			DatabaseHelper dbHelper = new DatabaseHelper();

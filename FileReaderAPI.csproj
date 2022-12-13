@@ -200,8 +200,15 @@
     </Compile>
     <Compile Include="Helpers\DatabaseHelper.cs" />
     <Compile Include="Helpers\ModelInsertHelper.cs" />
+    <Compile Include="Models\BankingCitEventModel.cs" />
+    <Compile Include="Models\BankingCountDetailsEventModel.cs" />
+    <Compile Include="Models\BankingOverShortInvModel.cs" />
     <Compile Include="Models\BankingOverShortModel.cs" />
     <Compile Include="Models\DgAreaModel.cs" />
+    <Compile Include="Models\DgBranchModel.cs" />
+    <Compile Include="Models\DgRegionModel.cs" />
+    <Compile Include="Models\GcTransactionModel.cs" />
+    <Compile Include="Models\ItemDiscountModel.cs" />
     <Compile Include="Models\ItemOptionBarcodeModel.cs" />
     <Compile Include="Models\ItemPromotionModel.cs" />
     <Compile Include="Models\MemberContactModel.cs" />

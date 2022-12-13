@@ -678,5 +678,196 @@ namespace FileReaderAPI.Controllers
 
 		}
 
+		
+
+		[HttpGet]
+		[Route("DgBranch")]
+
+		public IHttpActionResult ConvertDgBranch()
+		{
+
+
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DgBranch");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+
+
+							DgBranchModel dgBranchModel = new DgBranchModel()
+							{
+								BranchCode = Convert.ToInt32(rec.branch_code),
+								BranchDesc = Convert.ToString(rec.branch_desc),
+								AreaCode = Convert.ToInt32(rec.area_code),
+								BranchAddress1 = Convert.ToString(rec.branch_address_1),
+								BranchAddress2 = Convert.ToString(rec.branch_address_2),
+								BranchAddress3 = Convert.ToString(rec.branch_address_3),
+								BranchAddress4 = Convert.ToString(rec.branch_address_4),
+								PostCode = Convert.ToString(rec.post_code),
+								Telephone = Convert.ToString(rec.telephone),
+								NoTills = Convert.ToInt32(rec.no_tills),
+								BranchSqFeet = Convert.ToInt32(rec.branch_sq_feet),
+								BranchCoChain = Convert.ToString(rec.branch_co_chain),
+								OpeningDate = Convert.ToString(rec.opening_date),
+								ClosingDate = Convert.ToString(rec.closing_date),
+								CountryCode = Convert.ToString(rec.country_code),
+								GlCompanyCode = Convert.ToString(rec.gl_company_code),
+								FranchisePartner = Convert.ToString(rec.franchise_partner),
+								FranBulkOrRepl = Convert.ToString(rec.fran_bulk_or_repl),
+								SatOpeningFlag = Convert.ToString(rec.sat_opening_flag),
+								MerSwiaccvisa = Convert.ToString(rec.mer_swiaccvisa),
+								MerAmex = Convert.ToString(rec.mer_amex),
+								MerDiners = Convert.ToString(rec.mer_diners),
+								MerClub24 = Convert.ToString(rec.mer_club24),
+								MerTime = Convert.ToString(rec.mer_time),
+								MerJcb = Convert.ToString(rec.mer_jcb),
+								MerStyle = Convert.ToString(rec.mer_style),
+								AlcoholLicense = Convert.ToString(rec.alcohol_license),
+								AlOpeningMon = Convert.ToString(rec.al_opening_mon),
+								AlOpeningTue = Convert.ToString(rec.al_opening_tue),
+								AlOpeningWed = Convert.ToString(rec.al_opening_wed),
+								AlOpeningThu = Convert.ToString(rec.al_opening_thu),
+								AlOpeningFri = Convert.ToString(rec.al_opening_fri),
+								AlClosingFri = Convert.ToString(rec.al_closing_fri),
+								AlClosingSat = Convert.ToString(rec.al_closing_sat),
+								AlClosingSun = Convert.ToString(rec.al_closing_sun),
+								BranchType = Convert.ToString(rec.branch_type),
+								CompanyInd = Convert.ToInt32(rec.company_ind),
+								PartnerCode = Convert.ToString(rec.partner_code)
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.RunSPForModel(dgBranchModel, "InsertDgBranch");
+
+						}
+
+					}
+					catch (Exception ex)
+					{
+
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "DgBranch");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\DgBranch\Errored\" + file.Name);
+						return BadRequest(ex.Message);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DgBranch");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\DgBranch\Archive\" + file.Name);
+
+			}
+
+			return Ok("Successful");
+
+		}
+
+		[HttpGet]
+		[Route("Template")]
+
+		public IHttpActionResult TemplateMethod()
+		{
+
+
+
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\ItemPromotion");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+							if (stopReader == true)
+							{
+								reader.Dispose();
+							}
+
+							ItemPromotionModel itemPromotionModel = new ItemPromotionModel()
+							{
+								SaleItemNo = Convert.ToInt32(rec.sale_item_no),
+								TransNo = Convert.ToInt32(rec.trans_no),
+								PromotionCode = Convert.ToInt32(rec.promotion_code),
+								DiscountValue = Convert.ToInt32(rec.discount_value),
+								DiscountValueBc = Convert.ToInt32(rec.discount_value_bc),
+								DiscountRate = Convert.ToInt32(rec.discount_rate),
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.InsertItemPromotion(itemPromotionModel);
+						}
+
+					}
+					catch (Exception ex)
+					{
+						stopReader = true;
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Item Promotion");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\ItemPromotion\Errored\" + file.Name);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\ItemPromotion");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\ItemPromotion\Archive\" + file.Name);
+
+			}
+
+			return Ok("Successful");
+
+		}
+
 	}
+
+
 }
