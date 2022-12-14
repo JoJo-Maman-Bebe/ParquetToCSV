@@ -790,9 +790,9 @@ namespace FileReaderAPI.Controllers
 		}
 
 		[HttpGet]
-		[Route("Template")]
+		[Route("BankingCitEvent")]
 
-		public IHttpActionResult TemplateMethod()
+		public IHttpActionResult ConvertBankingCitEvent()
 		{
 
 
@@ -802,7 +802,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\ItemPromotion");
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\BankingCitEvent");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -822,17 +822,30 @@ namespace FileReaderAPI.Controllers
 								reader.Dispose();
 							}
 
-							ItemPromotionModel itemPromotionModel = new ItemPromotionModel()
+							BankingCitEventModel bankingCitEventModel = new BankingCitEventModel()
 							{
-								SaleItemNo = Convert.ToInt32(rec.sale_item_no),
-								TransNo = Convert.ToInt32(rec.trans_no),
-								PromotionCode = Convert.ToInt32(rec.promotion_code),
-								DiscountValue = Convert.ToInt32(rec.discount_value),
-								DiscountValueBc = Convert.ToInt32(rec.discount_value_bc),
-								DiscountRate = Convert.ToInt32(rec.discount_rate),
+								MessageID = Convert.ToInt32(rec.MessageID),
+								VersionNo = Convert.ToInt32(rec.VersionNo),
+								StoreNumber = Convert.ToInt32(rec.StoreNumber),
+								MessageType = Convert.ToInt32(rec.MessageType),
+								BankingDate = Convert.ToInt32(rec.BankingDate),
+								BankSlipNumber = Convert.ToInt32(rec.BankSlipNumber),
+								Tender = Convert.ToInt32(rec.Tender),
+								Value = Convert.ToInt32(rec.Value),
+								BagNumber = Convert.ToInt32(rec.BagNumber),
+								ReceiptNumber = Convert.ToInt32(rec.ReceiptNumber),
+								Status = Convert.ToInt32(rec.Status),
+								StoreBankerPayrollNumber = Convert.ToInt32(rec.StoreBankerPayrollNumber),
+								StoreBankerCheckerPayrollNumber = Convert.ToInt32(rec.StoreBankerCheckerPayrollNumber),
+								MessageActionDate = Convert.ToInt32(rec.MessageActionDate),
+								MessageActionTime = Convert.ToInt32(rec.MessageActionTime),
+								MessageActionCheckPayrollNumber = Convert.ToInt32(rec.MessageActionCheckPayrollNumber),
+								MessageActionPayrollNumber = Convert.ToInt32(rec.MessageActionPayrollNumber),
+								TenderType = Convert.ToInt32(rec.TenderType),
+								CurrencyCode = Convert.ToInt32(rec.CurrencyCode),
 							};
 							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
-							modelInsertHelper.InsertItemPromotion(itemPromotionModel);
+							modelInsertHelper.RunSPForModel(bankingCitEventModel, "InsertBankingCitEvents");
 						}
 
 					}
@@ -840,7 +853,7 @@ namespace FileReaderAPI.Controllers
 					{
 						stopReader = true;
 						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
-						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Item Promotion");
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Banking CIT Event");
 
 						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\ItemPromotion\Errored\" + file.Name);
 					}
@@ -855,17 +868,718 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\ItemPromotion");
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\BankingCitEvent");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\ItemPromotion\Archive\" + file.Name);
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\BankingCitEvent\Archive\" + file.Name);
 
 			}
 
 			return Ok("Successful");
 
 		}
+
+		[HttpGet]
+		[Route("GcTransaction")]
+
+		public IHttpActionResult ConvertGcTransaction()
+		{
+
+
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\GcTransaction");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+
+
+							GcTransactionModel gcTransactionModel = new GcTransactionModel()
+							{
+								TransNo = Convert.ToInt32(rec.trans_no),
+								TransDate = Convert.ToString(rec.trans_date),
+								TransTime = Convert.ToInt32(rec.trans_time),
+								BranchCode = Convert.ToString(rec.branch_code),
+								TillNumber = Convert.ToString(rec.till_number),
+								TransID = Convert.ToString(rec.trans_id),
+								PassFailInd = Convert.ToString(rec.pass_fail_ind),
+								GiftcardID = Convert.ToString(rec.giftcard_id),
+								SeqNo = Convert.ToString(rec.seqno),
+								TransType = Convert.ToInt32(rec.trans_type),
+								PolledStatus = Convert.ToInt32(rec.polled_status),
+								Amount = Convert.ToString(rec.amount),
+								CurrencyID = Convert.ToString(rec.currency_id),
+								ExchangeRate = Convert.ToString(rec.exchange_rate),
+								OperatorID = Convert.ToString(rec.operator_id),
+								SupervisorID = Convert.ToString(rec.supervisor_id),
+								VoidIndicator = Convert.ToString(rec.void_indicator),
+								NorFlag = Convert.ToString(rec.nor_flag),
+								TransReason = Convert.ToString(rec.trans_reason),
+								PolledDate = Convert.ToString(rec.polled_date),
+								DirectoryAccountNo = Convert.ToString(rec.directory_account_no),
+								Comments = Convert.ToString(rec.comments),
+								ClientID = Convert.ToString(rec.ClientID),
+								PartnerCode = Convert.ToString(rec.PartnerCode)
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.RunSPForModel(gcTransactionModel, "InsertGcTransaction");
+
+						}
+
+					}
+					catch (Exception ex)
+					{
+
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "GcTransaction");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\GcTransaction\Errored\" + file.Name);
+						return BadRequest(ex.Message);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\GcTransaction");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\GcTransaction\Archive\" + file.Name);
+
+			}
+
+			return Ok("Successful");
+
+		}
+
+
+		[HttpGet]
+		[Route("GcTransaction2")]
+
+		public IHttpActionResult ConvertGcTransaction2()
+		{
+
+
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\GcTransaction");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+
+
+							GcTransactionModel gcTransactionModel = new GcTransactionModel()
+							{
+								TransNo = Convert.ToInt32(rec.trans_no),
+								TransDate = Convert.ToString(rec.trans_date),
+								TransTime = Convert.ToInt32(rec.trans_time),
+								BranchCode = Convert.ToString(rec.branch_code),
+								TillNumber = Convert.ToString(rec.till_number),
+								TransID = Convert.ToString(rec.trans_id),
+								PassFailInd = Convert.ToString(rec.pass_fail_ind),
+								GiftcardID = Convert.ToString(rec.giftcard_id),
+								SeqNo = Convert.ToString(rec.seqno),
+								TransType = Convert.ToInt32(rec.trans_type),
+								PolledStatus = Convert.ToInt32(rec.polled_status),
+								Amount = Convert.ToString(rec.amount),
+								CurrencyID = Convert.ToString(rec.currency_id),
+								ExchangeRate = Convert.ToString(rec.exchange_rate),
+								OperatorID = Convert.ToString(rec.operator_id),
+								SupervisorID = Convert.ToString(rec.supervisor_id),
+								VoidIndicator = Convert.ToString(rec.void_indicator),
+								NorFlag = Convert.ToString(rec.nor_flag),
+								TransReason = Convert.ToString(rec.trans_reason),
+								PolledDate = Convert.ToString(rec.polled_date),
+								DirectoryAccountNo = Convert.ToString(rec.directory_account_no),
+								Comments = Convert.ToString(rec.comments),
+								ClientID = Convert.ToString(rec.ClientID),
+								PartnerCode = Convert.ToString(rec.PartnerCode)
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.RunSPForModel(gcTransactionModel, "InsertGcTransaction");
+
+						}
+
+					}
+					catch (Exception ex)
+					{
+
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "GcTransaction");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\GcTransaction\Errored\" + file.Name);
+						return BadRequest(ex.Message);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\GcTransaction");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\GcTransaction\Archive\" + file.Name);
+
+			}
+
+			return Ok("Successful");
+
+		}
+
+		[HttpGet]
+		[Route("ItemDiscount")]
+
+		public IHttpActionResult ConvertItemDiscount()
+		{
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\ItemDiscount");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+
+
+							ItemDiscountModel itemDiscountModel = new ItemDiscountModel()
+							{
+								SaleItemNo = Convert.ToInt32(rec.sale_item_no),
+								TransNo = Convert.ToInt64(rec.trans_no),
+								DiscountValue = Convert.ToInt32(rec.discount_value),
+								DiscountValueBc = Convert.ToInt32(rec.discount_value_bc),
+								DiscountRate = Convert.ToInt32(rec.discount_rate),
+								DiscountCardID = Convert.ToInt32(rec.discount_card_id),
+								DiscountCardNo = Convert.ToInt32(rec.discount_card_no),
+								DiscountCardVer = Convert.ToInt32(rec.discount_card_ver),
+								DiscountKeyWipe = Convert.ToString(rec.discount_key_wipe),
+								DisUniformInd = Convert.ToString(rec.dis_uniform_id)
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.RunSPForModel(itemDiscountModel, "InsertItemDiscount");
+
+						}
+
+					}
+					catch (Exception ex)
+					{
+
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "ItemDiscount");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\ItemDiscount\Errored\" + file.Name);
+						return BadRequest(ex.Message);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\ItemDiscount");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\ItemDiscount\Archive\" + file.Name);
+
+			}
+
+			return Ok("Successful");
+		}
+
+		[HttpGet]
+		[Route("DGRegion")]
+
+		public IHttpActionResult ConvertDGRegion()
+		{
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DGRegion");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+
+
+							DgRegionModel dgRegionModel = new DgRegionModel()
+							{
+								RegionCode = Convert.ToInt32(rec.region_code),
+								RegionDesc = Convert.ToString(rec.region_desc),
+								CountryCode = Convert.ToString(rec.country_code),
+								PartnerCode = Convert.ToString(rec.partner_code),
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.RunSPForModel(dgRegionModel, "InsertDGRegion");
+
+						}
+
+					}
+					catch (Exception ex)
+					{
+
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "DGRegion");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\DGRegion\Errored\" + file.Name);
+						return BadRequest(ex.Message);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DGRegion");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\DGRegion\Archive\" + file.Name);
+
+			}
+
+			return Ok("Successful");
+		}
+
+		[HttpGet]
+		[Route("DGBranch")]
+
+		public IHttpActionResult ConvertDGBranch()
+		{
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DGBranch");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+
+
+							DgBranchModel dgBranchModel = new DgBranchModel()
+							{
+								BranchCode = Convert.ToInt32(rec.branch_code),
+								BranchDesc = Convert.ToString(rec.branch_desc),
+								AreaCode = Convert.ToInt32(rec.area_code),
+								BranchAddress1 = Convert.ToString(rec.branch_address1),
+								BranchAddress2 = Convert.ToString(rec.branch_address2),
+								BranchAddress3 = Convert.ToString(rec.branch_address3),
+								BranchAddress4 = Convert.ToString(rec.branch_address4),
+								PostCode = Convert.ToString(rec.post_code),
+								Telephone = Convert.ToString(rec.telephone),
+								NoTills = Convert.ToInt32(rec.no_tills),
+								BranchSqFeet = Convert.ToInt32(rec.branch_sq_feet),
+								BranchCoChain = Convert.ToInt32(rec.branch_co_chain),
+								OpeningDate = Convert.ToString(rec.opening_date),
+								ClosingDate = Convert.ToString(rec.closing_Date),
+								CountryCode = Convert.ToString(rec.country_code),
+								GlCompanyCode = Convert.ToString(rec.gl_company_code),
+								FranchisePartner = Convert.ToString(rec.franchise_partner),
+								FranBulkOrRepl = Convert.ToString(rec.fran_bulk_or_repl),
+								SatOpeningFlag = Convert.ToString(rec.sat_opening_flag),
+								MerSwiaccvisa = Convert.ToString(rec.mer_swiaccvisa),
+								MerAmex = Convert.ToString(rec.mer_amex),
+								MerDiners = Convert.ToString(rec.mer_diners),
+								MerClub24 = Convert.ToString(rec.mer_club24),
+								MerTime = Convert.ToString(rec.mer_time),
+								MerJcb = Convert.ToString(rec.mer_jcb),
+								MerStyle = Convert.ToString(rec.mer_style),
+								AlcoholLicense = Convert.ToString(rec.alcohol_license),
+								AlOpeningMon = Convert.ToString(rec.al_opening_mon),
+								AlOpeningTue = Convert.ToString(rec.al_opening_tue),
+								AlOpeningWed = Convert.ToString(rec.al_opening_wed),
+								AlOpeningThu = Convert.ToString(rec.al_opening_thu),
+								AlOpeningFri = Convert.ToString(rec.al_opening_fri),
+								AlOpeningSat = Convert.ToString(rec.al_opening_sat),
+								AlOpeningSun = Convert.ToString(rec.al_opening_sun),
+								AlClosingMon = Convert.ToString(rec.al_closing_mon),
+								AlClosingTue = Convert.ToString(rec.al_closing_tue),
+								AlClosingWed = Convert.ToString(rec.al_closing_wed),
+								AlClosingThu = Convert.ToString(rec.al_closing_thu),
+								AlClosingFri = Convert.ToString(rec.al_closing_fri),
+								AlClosingSat = Convert.ToString(rec.al_closing_sat),
+								AlClosingSun = Convert.ToString(rec.al_closing_sun),
+								BranchType = Convert.ToString(rec.branch_type),
+								CompanyInd = Convert.ToInt32(rec.company_ind),
+								PartnerCode = Convert.ToString(rec.partner_code)
+
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.RunSPForModel(dgBranchModel, "InsertDGBranch");
+
+						}
+
+					}
+					catch (Exception ex)
+					{
+
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "DGBranch");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\DGBranch\Errored\" + file.Name);
+						return BadRequest(ex.Message);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DGBranch");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\DGBranch\Archive\" + file.Name);
+
+			}
+
+			return Ok("Successful");
+		}
+
+		[HttpGet]
+		[Route("DGArea")]
+
+		public IHttpActionResult ConvertDGArea()
+		{
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DGArea");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+
+
+							DgAreaModel dgAreaModel = new DgAreaModel()
+							{
+								AreaCode = Convert.ToInt32(rec.area_code),
+								AreaDesc = Convert.ToString(rec.area_desc),
+								RegionCode = Convert.ToInt32(rec.region_code),
+								AreaManager = Convert.ToString(rec.area_manager),
+								PartnerCode = Convert.ToString(rec.partner_code)
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.RunSPForModel(dgAreaModel, "InsertDGArea");
+
+						}
+
+					}
+					catch (Exception ex)
+					{
+
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "DGArea");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\DGArea\Errored\" + file.Name);
+						return BadRequest(ex.Message);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DGArea");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\DGArea\Archive\" + file.Name);
+
+			}
+
+			return Ok("Successful");
+		}
+
+		[HttpGet]
+		[Route("Tender")]
+
+		public IHttpActionResult ConvertTender()
+		{
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\Tender");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+
+
+							TenderModel tenderModel = new TenderModel()
+							{
+								TenderNo = Convert.ToInt32(rec.tender_no),
+								TransNo = Convert.ToInt64(rec.trans_no),
+								TenderType = Convert.ToInt32(rec.tender_type),
+								TenderAmount = Convert.ToInt32(rec.tender_amount),
+								TenderAmountBc = Convert.ToInt32(rec.tender_amount_bc)
+
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.RunSPForModel(tenderModel, "InsertTender");
+
+						}
+
+					}
+					catch (Exception ex)
+					{
+
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Tender");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\Tender\Errored\" + file.Name);
+						return BadRequest(ex.Message);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\Tender");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\Tender\Archive\" + file.Name);
+
+			}
+
+			return Ok("Successful");
+		}
+
+		[HttpGet]
+		[Route("Transaction")]
+
+		public IHttpActionResult ConvertTransaction()
+		{
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\Transaction");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+
+
+							TransactionModel transactionModel = new TransactionModel()
+							{
+								TransNo = Convert.ToInt32(rec.trans_no),
+								TransID = Convert.ToInt64(rec.trans_id),
+								NoItems = Convert.ToInt32(rec.no_items),
+								CompanyInd = Convert.ToInt32(rec.company_ind),
+								BranchCode = Convert.ToInt32(rec.branch_code),
+								PcNumber = Convert.ToInt32(rec.pc_number),
+								TillNumber = Convert.ToInt32(rec.till_number),
+								TransDate = Convert.ToInt32(rec.trans_date),
+								TransTime = Convert.ToString(rec.trans_time),
+								SalesPerson = Convert.ToString(rec.salesperson),
+								SalesAsstNo = Convert.ToInt32(rec.sales_asst_no),
+								VoidIndicator = Convert.ToInt64(rec.void_indicator),
+								TaxFreeIndicator = Convert.ToInt32(rec.taxfree_indicator),
+								TransSaleValue = Convert.ToInt32(rec.trans_sale_value),
+								TransSaleValueBc = Convert.ToInt32(rec.trans_sale_value_bc),
+								TransRealValue = Convert.ToInt32(rec.trans_real_value),
+								TransRealValueBc = Convert.ToInt32(rec.trans_real_value_bc),
+								TransRevenue = Convert.ToInt32(rec.trans_revenue),
+								TransRevenueBc = Convert.ToString(rec.trans_revenue_bc),
+								NoSaleReason = Convert.ToString(rec.no_sale_reason),
+								TbvFlag = Convert.ToInt32(rec.tbvflag),
+								PartnerCode = Convert.ToInt64(rec.partner_code)
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.RunSPForModel(transactionModel, "InsertTransaction");
+
+						}
+
+					}
+					catch (Exception ex)
+					{
+
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Transaction");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\Transaction\Errored\" + file.Name);
+						return BadRequest(ex.Message);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\Transaction");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\Transaction\Archive\" + file.Name);
+
+			}
+
+			return Ok("Successful");
+		}
+
+		[HttpGet]
+		[Route("TillCountDetailsEvent")]
+
+		public IHttpActionResult ConvertTillCountDetailsEvent()
+		{
+
+			return Ok("Successful");
+		}
+
 
 	}
 

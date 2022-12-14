@@ -39,6 +39,12 @@ namespace FileReaderAPI.Models
 		public string AlOpeningWed { get; set; }
 		public string AlOpeningThu { get; set; }
 		public string AlOpeningFri { get; set; }
+		public string AlOpeningSat { get; set; }
+		public string AlOpeningSun { get; set; }
+		public string AlClosingMon { get; set; }
+		public string AlClosingTue { get; set; }
+		public string AlClosingWed { get; set; }
+		public string AlClosingThu { get; set; }
 		public string AlClosingFri { get; set; }
 		public string AlClosingSat { get; set; }
 		public string AlClosingSun { get; set; }
