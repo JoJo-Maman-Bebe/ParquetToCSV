@@ -1510,8 +1510,8 @@ namespace FileReaderAPI.Controllers
 
 							TransactionModel transactionModel = new TransactionModel()
 							{
-								TransNo = Convert.ToInt32(rec.trans_no),
-								TransID = Convert.ToInt64(rec.trans_id),
+								TransNo = Convert.ToInt64(rec.trans_no),
+								TransID = Convert.ToInt32(rec.trans_id),
 								NoItems = Convert.ToInt32(rec.no_items),
 								CompanyInd = Convert.ToInt32(rec.company_ind),
 								BranchCode = Convert.ToInt32(rec.branch_code),
@@ -1571,16 +1571,233 @@ namespace FileReaderAPI.Controllers
 			return Ok("Successful");
 		}
 
-		[HttpGet]
-		[Route("TillCountDetailsEvent")]
 
-		public IHttpActionResult ConvertTillCountDetailsEvent()
+		[HttpGet]
+		[Route("TenderCredit")]
+
+		public IHttpActionResult ConvertTenderCredit()
 		{
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\TenderCredit");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+
+
+							TenderCreditModel TenderCreditModel = new TenderCreditModel()
+							{
+								TenderNo = Convert.ToInt32(rec.tender_no),
+								TransNo = Convert.ToInt64(rec.trans_no),
+								TenderAccNo = Convert.ToString(rec.tender_acc_no),
+								TenderExp = Convert.ToString(rec.tender_exp),
+								TenderAuthCode = Convert.ToString(rec.tender_auth_code),
+								KeyWipeInd = Convert.ToString(rec.key_wipe_ind),
+								TenderAccVerNo = Convert.ToString(rec.tender_acc_ver_no),
+								TenderAmount = Convert.ToInt32(rec.tender_amount),
+								TenderAmountBc = Convert.ToInt32(rec.tender_amount_bc),
+								AuthMethod = Convert.ToString(rec.auth_method),
+								ContactlessFormFactor = Convert.ToString(rec.contactless_form_factor),
+								PSPProvider = Convert.ToString(rec.PSPProvider),
+								PartnerCode = Convert.ToString(rec.partner_code)
+
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.RunSPForModel(TenderCreditModel, "InsertTenderCredit");
+
+						}
+
+					}
+					catch (Exception ex)
+					{
+
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "TenderCredit");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\TenderCredit\Errored\" + file.Name);
+						return BadRequest(ex.Message);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\TenderCredit");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\TenderCredit\Archive\" + file.Name);
+
+			}
 
 			return Ok("Successful");
 		}
 
 
+		[HttpGet]
+		[Route("LuItemPromotion")]
+
+		public IHttpActionResult ConvertLuItemPromotion()
+		{
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\LuItemPromotion");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+
+
+							LuItemPromotion luItemPromotion = new LuItemPromotion()
+							{
+								PromoCode = Convert.ToInt32(rec.tender_no),
+								PromoDesc = Convert.ToString(rec.trans_no),
+
+
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.RunSPForModel(luItemPromotion, "InsertLuItemPromotion");
+
+						}
+
+					}
+					catch (Exception ex)
+					{
+
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "LuItemPromotion");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\LuItemPromotion\Errored\" + file.Name);
+						return BadRequest(ex.Message);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\LuItemPromotion");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\LuItemPromotion\Archive\" + file.Name);
+
+			}
+
+			return Ok("Successful");
+		}
+
+		[HttpGet]
+		[Route("LuTender")]
+
+		public IHttpActionResult ConvertLuTender()
+		{
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\LuTender");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null || stopReader == true)
+						{
+
+
+							LuTenderModel luTenderModel = new LuTenderModel()
+							{
+								TenderCode = Convert.ToInt32(rec.tender_code),
+								TenderDesc = Convert.ToString(rec.tender_desc),
+
+
+							};
+							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							modelInsertHelper.RunSPForModel(luTenderModel, "InsertLuTender");
+
+						}
+
+					}
+					catch (Exception ex)
+					{
+
+						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "LuTender");
+
+						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\LuTender\Errored\" + file.Name);
+						return BadRequest(ex.Message);
+					}
+				}
+
+			}
+			catch (Exception ex)
+			{
+
+				return BadRequest("Errored with " + ex.Message);
+
+			}
+
+
+			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\LuTender");
+			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+			foreach (FileInfo file in files2)
+			{
+
+				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\LuTender\Archive\" + file.Name);
+
+			}
+
+			return Ok("Successful");
+		}
 	}
 
 
