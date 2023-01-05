@@ -198,8 +198,10 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\AzureHelper.cs" />
     <Compile Include="Helpers\DatabaseHelper.cs" />
     <Compile Include="Helpers\ModelInsertHelper.cs" />
+    <Compile Include="Models\ApiLogModel.cs" />
     <Compile Include="Models\BankingCitEventModel.cs" />
     <Compile Include="Models\BankingCountDetailsEventModel.cs" />
     <Compile Include="Models\BankingOverShortInvModel.cs" />
@@ -212,11 +214,16 @@
     <Compile Include="Models\ItemOptionBarcodeModel.cs" />
     <Compile Include="Models\ItemPromotionModel.cs" />
     <Compile Include="Models\LuItemPromotion.cs" />
+    <Compile Include="Models\LuSundryModel.cs" />
     <Compile Include="Models\LuTenderModel.cs" />
+    <Compile Include="Models\LuVoidModel.cs" />
     <Compile Include="Models\MemberContactModel.cs" />
+    <Compile Include="Models\SafeCountDetailsEventModel.cs" />
+    <Compile Include="Models\SaleItemModel.cs" />
     <Compile Include="Models\StkBranchBalDailyModel.cs" />
     <Compile Include="Models\StkMovementModel.cs" />
     <Compile Include="Models\StocktakeModel.cs" />
+    <Compile Include="Models\SundryBranchModel.cs" />
     <Compile Include="Models\TenderCreditModel.cs" />
     <Compile Include="Models\TenderModel.cs" />
     <Compile Include="Models\TillCountDetailsEventModel.cs" />

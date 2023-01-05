@@ -1,24 +1,71 @@
-﻿<div class="jumbotron">
-    <h1>ASP.NET</h1>
-    <p class="lead">ASP.NET is a free web framework for building great Web sites and Web applications using HTML, CSS, and JavaScript.</p>
-    <p><a href="https://asp.net" class="btn btn-primary btn-lg">Learn more &raquo;</a></p>
-</div>
-<div class="row">
-    <div class="col-md-4">
-        <h2>Getting started</h2>
-        <p>ASP.NET Web API is a framework that makes it easy to build HTTP services that reach
-        a broad range of clients, including browsers and mobile devices. ASP.NET Web API
-        is an ideal platform for building RESTful applications on the .NET Framework.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301870">Learn more &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Get more libraries</h2>
-        <p>NuGet is a free Visual Studio extension that makes it easy to add, remove, and update libraries and tools in Visual Studio projects.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301871">Learn more &raquo;</a></p>
-    </div>
-    <div class="col-md-4">
-        <h2>Web Hosting</h2>
-        <p>You can easily find a web hosting company that offers the right mix of features and price for your applications.</p>
-        <p><a class="btn btn-default" href="https://go.microsoft.com/fwlink/?LinkId=301872">Learn more &raquo;</a></p>
-    </div>
-</div>
+﻿@using System.Web.Http.Controllers
+@using System.Web.Http.Description
+@using System.Collections.ObjectModel
+
+@{
+	var apiDescList = ViewBag.ApiDescriptions;
+}
+
+<html>
+<head>
+	<title>File Reader API Test Page</title>
+</head>
+<body>
+	<p>Select from the list below to trigger the corresponding API</p>
+	<table>
+		<tr>
+			<th>API Request</th>
+		</tr>
+		
+		@foreach (var api in apiDescList)
+		{
+	<tr>
+
+
+		<td><button class="route-button" data-method="GET" data-path="@api.RelativePath" >@api.RelativePath</button></td>
+
+	</tr>
+		}
+	</table>
+	<br /><br />
+
+	<br /><br />
+	<p>Response:</p>
+	<pre id="response"></pre>
+
+	<script>
+		const routeButtons = document.querySelectorAll('.route-button');
+		const responseDiv = document.getElementById('response');
+
+		function sendRequest(method, path) {
+			responseDiv.innerText = '';
+			const apiUrl = window.location.origin + '/' + path;
+			const xhr = new XMLHttpRequest();
+			xhr.onload = function () {
+				if (xhr.status >= 200 && xhr.status < 300) {
+					responseDiv.innerText = xhr.responseText + ' -- ' + xhr.response;
+				} else {
+					responseDiv.innerText = 'Error: ' + xhr.statusText + ' -- ' + xhr.response;
+				}
+			};
+			xhr.open(method, apiUrl);
+			xhr.send();
+		}
+
+		routeButtons.forEach(function (button) {
+			button.addEventListener('click', function () {
+				const method = button.getAttribute('data-method');
+				const path = button.getAttribute('data-path');
+				sendRequest(method, path);
+			});
+		});
+	</script>
+	<section class="content-wrapper main-content clear-fix">
+
+
+
+
+
+	</section>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<doc>
+  <assembly>
+    <name>MyWebApi</name>
+  </assembly>
+  <members>
+    <member name="T:FileReaderApi.Controllers.ValuesController">
+      <summary>
+        This is the ValuesController class, which provides a list of values through the Get action.
+      </summary>
+    </member>
+    <member name="M:FileReaderApi.Controllers.ValuesController.Get">
+      <summary>
+        Gets a list of values.
+      </summary>
+      <returns>A list of values.</returns>
+    </member>
+  </members>
+</doc>
