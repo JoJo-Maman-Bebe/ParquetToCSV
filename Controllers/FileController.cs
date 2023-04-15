@@ -8,39 +8,99 @@ using FileReaderAPI.Helpers;
 using System.Data.SqlClient;
 using System.Data;
 
-
 namespace FileReaderAPI.Controllers
 {
+
+	
+
 	[RoutePrefix("api/file")]
 	public class FileController : ApiController
 	{
 		public string storeNumber;
-		public bool stopReader = false;
+		public string baseFolder = new ConfigurationHelper().GetAppSettingsValue("parquetFileBaseFolder");
+		public ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
 
-		[HttpPost]
-		[Route("GetCardBalances")]
+		[HttpGet]
+		[Route("InsertAllTransactionData")]
 
-		//POST /api/balance
-		//Serial or PAN needed (int or string)
-		//References(unique references to identify transaction, max 16 characters)
-		//OPTIONAL - pin
-		public IHttpActionResult GetCardBalances()
+		public IHttpActionResult InsertAllTransactionData()
         {
-			string url = "https:///api.inspireddeck.co.uk//api//balance";
-			return Ok();
+            try
+            {
+				ConvertSaleItem();
+				ConvertTransaction();
+				ConvertTender();
+				ConvertLuTender();
+				ConvertBankingCitEvent();
+				ConvertTillCountDetEvent();
+				ConvertBankCount();
+				ConvertSundryBranch();
+				return Ok("Success");
+			}
+			catch(Exception e)
+            {
+				return BadRequest(e.Message);
+            }
+			
         }
+		[HttpGet]
+		[Route("InsertNextStatements")]
+
+		public IHttpActionResult InsertNextStatementsToNav()
+        {
+			IntegrationHelper integrationHelper = new IntegrationHelper();
+
+			integrationHelper.InsertNextTransactions();
+			integrationHelper.CreateNextStatements();
+
+			return Ok("Success");
+        }
+
+		[HttpGet]
+		[Route("GetNewFiles/{id}")]
+
+		public IHttpActionResult DownloadNewParquetFiles()
+		{
+			try
+			{
+				//sastoken = 42M8Q~JmFL6GOI.~9cODIgBTyVguzhyOE4Sd7cT8
+
+				AzureHelper azureHelper = new AzureHelper();
+				azureHelper.GetNewParquetFiles();
+
+			}
+			catch (Exception e)
+			{
+				return BadRequest(e.Message);
+
+			}
+			return Ok("Ok");
+		}
 
 
 		[HttpGet]
-		[Route("GetFiles")]
+		[Route("GetFiles/{id}")]
 
-		public IHttpActionResult MoveFilesFromPowershell()
-        {
+		public  IHttpActionResult DownloadParquetFiles()
+		{
+            try
+            {
+				//rQh8Q~MPAGFed_mTDIwCKvv_yggk93Is~PC2baQT
+				//42M8Q~JmFL6GOI.~9cODIgBTyVguzhyOE4Sd7cT8
+							//string containerUrl = "https://jmblandingdev.blob.core.windows.net/inbound";
+							//string sasToken = "sv=2021-06-08&ss=bfqt&srt=sco&sp=rlx&se=2023-10-24T18:07:54Z&st=2022-10-24T10:07:54Z&sip=188.227.240.140&spr=https&sig=pnIEu9dBNEveH6IMV98YDcpKnWKTEb%2BW73amLyOebXo%3D";
 
-			AzureHelper azureHelper = new AzureHelper();
-			azureHelper.ExecuteBatFile();
-			return Ok("Success");
-        }
+							AzureHelper azureHelper = new AzureHelper();
+			azureHelper.GetFirstParquetFile("https://jmblandingdev.blob.core.windows.net/inbound", "sv=2021-06-08&ss=bfqt&srt=sco&sp=rlx&se=2023-10-24T18:07:54Z&st=2022-10-24T10:07:54Z&sip=188.227.240.140&spr=https&sig=pnIEu9dBNEveH6IMV98YDcpKnWKTEb%2BW73amLyOebXo%3D");
+
+			}
+			catch(Exception e)
+            {
+				return BadRequest(e.Message);
+
+            }
+			return Ok("Ok");
+		}
 
 		[HttpGet]
 		[Route("MemberContacts")]
@@ -112,7 +172,7 @@ namespace FileReaderAPI.Controllers
 
 
 		
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\Warehouse740Transactions");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"Warehouse740Transactions");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach(FileInfo file in files)
@@ -125,12 +185,8 @@ namespace FileReaderAPI.Controllers
 					var reader = new ChoParquetReader(file.FullName);
 					dynamic rec;
 
-					while ((rec = reader.Read()) != null || stopReader == true)
+					while ((rec = reader.Read()) != null )
 					{
-						if(stopReader == true)
-							{
-								reader.Dispose();
-							}
 
 						Warehouse740TransactionModel warehouse740TransactionModel = new Warehouse740TransactionModel()
 						{
@@ -148,18 +204,17 @@ namespace FileReaderAPI.Controllers
 							VATRate = Convert.ToInt32(rec.VATRate),
 							ClientID = Convert.ToString(rec.ClientID)
 						};
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+
 						modelInsertHelper.Insert740Transaction(warehouse740TransactionModel);
 					}
 					
 					}
 					catch(Exception ex)
 					{
-						stopReader = true;
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "740 Transactions");
 						GenerateActivityLog("740Transactions", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\Warehouse740Transactions\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"Warehouse740Transactions\Errored\" + file.Name);
 					}
 				}
 
@@ -172,11 +227,11 @@ namespace FileReaderAPI.Controllers
 			}
 
 			
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\Warehouse740Transactions");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"Warehouse740Transactions");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\Warehouse740Transactions\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"Warehouse740Transactions\Archive\" + file.Name);
 
 			}
 
@@ -202,7 +257,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\BankingOverShort");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"BankingOverShort");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -215,12 +270,8 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null )
 						{
-							if (stopReader == true)
-							{
-								reader.Dispose();
-							}
 
 							BankingOverShortModel bankingOverShortModel = new BankingOverShortModel()
 							{
@@ -238,7 +289,7 @@ namespace FileReaderAPI.Controllers
 									BankAmountBc = Convert.ToDecimal(rec.bank_amount_bc),
 									PolledDate = Convert.ToString(rec.polled_date)
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.InsertBankingOverShort(bankingOverShortModel);
 						}
 
@@ -246,11 +297,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 						GenerateActivityLog("BankingOverShort", "Error");
-						stopReader = true;
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Banking Over Short");
 
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\BankingOverShort\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"BankingOverShort\Errored\" + file.Name);
 					}
 				}
 
@@ -258,17 +308,16 @@ namespace FileReaderAPI.Controllers
 			catch (Exception ex)
 			{
 				GenerateActivityLog("BankingOverShort", "Error");
-				stopReader = true;
 				return BadRequest("Errored with " + ex.Message);
 
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\BankingOverShort");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"BankingOverShort");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\BankingOverShort\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"BankingOverShort\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("BankingOverShort", "Success");
@@ -288,8 +337,8 @@ namespace FileReaderAPI.Controllers
 			{
 
 
-
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\ItemPromotion");
+				var reader = new ChoParquetReader();
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"ItemPromotion");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -299,15 +348,11 @@ namespace FileReaderAPI.Controllers
 
 
 
-						var reader = new ChoParquetReader(file.FullName);
+						reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
-							if (stopReader == true)
-							{
-								reader.Dispose();
-							}
 
 							ItemPromotionModel itemPromotionModel = new ItemPromotionModel()
 							{
@@ -318,36 +363,37 @@ namespace FileReaderAPI.Controllers
 								DiscountValueBc = Convert.ToInt32(rec.discount_value_bc),
 								DiscountRate = Convert.ToInt32(rec.discount_rate),
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.InsertItemPromotion(itemPromotionModel);
 						}
 
 					}
 					catch (Exception ex)
 					{
+						reader.Dispose();
 						GenerateActivityLog("ItemPromotion", "Error");
-						stopReader = true;
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Item Promotion");
 
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\ItemPromotion\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"ItemPromotion\Errored\" + file.Name);
 					}
 				}
 
 			}
 			catch (Exception ex)
 			{
+				
 				GenerateActivityLog("ItemPromotion", "Error");
 				return BadRequest("Errored with " + ex.Message);
 
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\ItemPromotion");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"ItemPromotion");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\ItemPromotion\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"ItemPromotion\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("ItemPromotion", "Success");
@@ -370,7 +416,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\StkBranchBalDaily");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"StkBranchBalDaily");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -383,7 +429,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
@@ -400,7 +446,7 @@ namespace FileReaderAPI.Controllers
 								FsUnits = Convert.ToInt32(rec.fs_units),
 								FsCostVal = Convert.ToDecimal(rec.fs_cost_val)
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.InsertStkBalDaily(stkBranchBalDailyModel);
 							
 						}
@@ -409,10 +455,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 						
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Stk Branch Bal Daily");
 
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\StkBranchBalDaily\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"StkBranchBalDaily\Errored\" + file.Name);
 						GenerateActivityLog("StkBalDaily", "Error");
 						return BadRequest(ex.Message);
 					}
@@ -427,12 +473,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\StkBranchBalDaily");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"StkBranchBalDaily");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 				
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\StkBranchBalDaily\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"StkBranchBalDaily\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("StkBalDaily", "Success");
@@ -452,7 +498,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\TillCountDetailsEvent");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"TillCountDetailsEvent");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -465,7 +511,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
@@ -482,7 +528,7 @@ namespace FileReaderAPI.Controllers
 								TenderMethodType = Convert.ToInt32(rec.tender_method_type),
 								CurrencyCode = Convert.ToString(rec.currency_code)
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.InsertTillCountDetEvent(tillCountDetailsEventModel);
 
 						}
@@ -491,10 +537,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 						GenerateActivityLog("TillCountDetailsEvent", "Error");
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Till Count Details Event");
 
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\TillCountDetailsEvent\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"TillCountDetailsEvent\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -508,12 +554,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\TillCountDetailsEvent");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"TillCountDetailsEvent");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\TillCountDetailsEvent\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"TillCountDetailsEvent\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("TillCountDetailsEvent", "Success");
@@ -533,7 +579,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\StockTake");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"StockTake");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -546,7 +592,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
@@ -562,7 +608,7 @@ namespace FileReaderAPI.Controllers
 								Group = Convert.ToString(rec.group),
 								Status = Convert.ToString(rec.status),
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.InsertStocktake(stocktakeModel);
 
 						}
@@ -571,10 +617,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 						GenerateActivityLog("StockTake", "Error");
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Stock Take");
 
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\StockTake\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"StockTake\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -588,12 +634,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\StockTake");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"StockTake");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\StockTake\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"StockTake\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("StockTake", "Success");
@@ -613,7 +659,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\StkMovements");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"StkMovements");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -626,7 +672,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
@@ -670,7 +716,7 @@ namespace FileReaderAPI.Controllers
 								ProductPartnerCode = Convert.ToString(rec.ProductPartnerCode),
 								BranchPartnerCode = Convert.ToString(rec.BranchPartnerCode)
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.InsertStkMovement(stkMovementModel);
 
 						}
@@ -679,10 +725,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "StkMovements");
 						GenerateActivityLog("StkMovements", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\StkMovements\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"StkMovements\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -696,12 +742,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\StkMovements");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"StkMovements");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\StkMovements\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"StkMovements\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("StkMovements", "Success");
@@ -723,7 +769,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DgBranch");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"DgBranch");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -736,7 +782,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
@@ -745,10 +791,10 @@ namespace FileReaderAPI.Controllers
 								BranchCode = Convert.ToInt32(rec.branch_code),
 								BranchDesc = Convert.ToString(rec.branch_desc),
 								AreaCode = Convert.ToInt32(rec.area_code),
-								BranchAddress1 = Convert.ToString(rec.branch_address_1),
-								BranchAddress2 = Convert.ToString(rec.branch_address_2),
-								BranchAddress3 = Convert.ToString(rec.branch_address_3),
-								BranchAddress4 = Convert.ToString(rec.branch_address_4),
+								BranchAddress1 = Convert.ToString(rec.branch_address1),
+								BranchAddress2 = Convert.ToString(rec.branch_address2),
+								BranchAddress3 = Convert.ToString(rec.branch_address3),
+								BranchAddress4 = Convert.ToString(rec.branch_address4),
 								PostCode = Convert.ToString(rec.post_code),
 								Telephone = Convert.ToString(rec.telephone),
 								NoTills = Convert.ToInt32(rec.no_tills),
@@ -774,14 +820,20 @@ namespace FileReaderAPI.Controllers
 								AlOpeningWed = Convert.ToString(rec.al_opening_wed),
 								AlOpeningThu = Convert.ToString(rec.al_opening_thu),
 								AlOpeningFri = Convert.ToString(rec.al_opening_fri),
+								AlClosingMon = Convert.ToString(rec.al_closing_mon),
+								AlClosingTue = Convert.ToString(rec.al_closing_tue),
+								AlClosingWed = Convert.ToString(rec.al_closing_wed),
+								AlClosingThu = Convert.ToString(rec.al_closing_thu),
 								AlClosingFri = Convert.ToString(rec.al_closing_fri),
+								AlOpeningSat = Convert.ToString(rec.al_opening_sat),
+								AlOpeningSun = Convert.ToString(rec.al_opening_sun),
 								AlClosingSat = Convert.ToString(rec.al_closing_sat),
 								AlClosingSun = Convert.ToString(rec.al_closing_sun),
 								BranchType = Convert.ToString(rec.branch_type),
 								CompanyInd = Convert.ToInt32(rec.company_ind),
-								PartnerCode = Convert.ToString(rec.partner_code)
+								PartnerCode = Convert.ToString(rec.partner_code)	
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(dgBranchModel, "InsertDgBranch");
 
 						}
@@ -790,10 +842,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 						GenerateActivityLog("DgBranch", "Error");
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "DgBranch");
 
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\DgBranch\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"DgBranch\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -807,12 +859,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DgBranch");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"DgBranch");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\DgBranch\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"DgBranch\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("DgBranch", "Success");
@@ -833,7 +885,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\BankingCitEvent");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"BankingCitEvent");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -846,47 +898,43 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
-							if (stopReader == true)
-							{
-								reader.Dispose();
-							}
+
 
 							BankingCitEventModel bankingCitEventModel = new BankingCitEventModel()
 							{
-								MessageID = Convert.ToInt32(rec.MessageID),
-								VersionNo = Convert.ToInt32(rec.VersionNo),
+								MessageID = Convert.ToString(rec.MessageID),
+								VersionNo = Convert.ToString(rec.VersionNo),
 								StoreNumber = Convert.ToInt32(rec.StoreNumber),
 								MessageType = Convert.ToInt32(rec.MessageType),
-								BankingDate = Convert.ToInt32(rec.BankingDate),
+								BankingDate = Convert.ToString(rec.BankingDate),
 								BankSlipNumber = Convert.ToInt32(rec.BankSlipNumber),
-								Tender = Convert.ToInt32(rec.Tender),
-								Value = Convert.ToInt32(rec.Value),
-								BagNumber = Convert.ToInt32(rec.BagNumber),
-								ReceiptNumber = Convert.ToInt32(rec.ReceiptNumber),
-								Status = Convert.ToInt32(rec.Status),
-								StoreBankerPayrollNumber = Convert.ToInt32(rec.StoreBankerPayrollNumber),
-								StoreBankerCheckerPayrollNumber = Convert.ToInt32(rec.StoreBankerCheckerPayrollNumber),
-								MessageActionDate = Convert.ToInt32(rec.MessageActionDate),
-								MessageActionTime = Convert.ToInt32(rec.MessageActionTime),
-								MessageActionCheckPayrollNumber = Convert.ToInt32(rec.MessageActionCheckPayrollNumber),
-								MessageActionPayrollNumber = Convert.ToInt32(rec.MessageActionPayrollNumber),
+								Tender = Convert.ToString(rec.Tender),
+								Value = Convert.ToString(rec.Value),
+								BagNumber = Convert.ToString(rec.BagNumber),
+								ReceiptNumber = Convert.ToString(rec.ReceiptNumber),
+								Status = Convert.ToString(rec.Status),
+								StoreBankerPayrollNumber = Convert.ToInt64(rec.StoreBankerPayrollNumber),
+								StoreBankerCheckerPayrollNumber = Convert.ToInt64(rec.StoreBankerCheckerPayrollNumber),
+								MessageActionDate = Convert.ToString(rec.MessageActionDate),
+								MessageActionTime = Convert.ToString(rec.MessageActionTime),
+								MessageActionCheckPayrollNumber = Convert.ToInt64(rec.MessageActionCheckPayrollNumber),
+								MessageActionPayrollNumber = Convert.ToInt64(rec.MessageActionPayrollNumber),
 								TenderType = Convert.ToInt32(rec.TenderType),
-								CurrencyCode = Convert.ToInt32(rec.CurrencyCode),
+								CurrencyCode = Convert.ToString(rec.CurrencyCode),
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(bankingCitEventModel, "InsertBankingCitEvents");
 						}
 
 					}
 					catch (Exception ex)
 					{
-						stopReader = true;
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Banking CIT Event");
 						GenerateActivityLog("BankingCitEvent", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\BankingCitEvent\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"BankingCitEvent\Errored\" + file.Name);
 					}
 				}
 
@@ -899,11 +947,11 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\BankingCitEvent");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"BankingCitEvent");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\BankingCitEvent\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"BankingCitEvent\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("BankingCitEvent", "Success");
@@ -923,7 +971,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\GcTransaction");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"GcTransaction");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -936,7 +984,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null )
 						{
 
 
@@ -967,7 +1015,7 @@ namespace FileReaderAPI.Controllers
 								ClientID = Convert.ToString(rec.ClientID),
 								PartnerCode = Convert.ToString(rec.PartnerCode)
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(gcTransactionModel, "InsertGcTransaction");
 
 						}
@@ -976,10 +1024,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "GcTransaction");
 						GenerateActivityLog("GcTransaction", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\GcTransaction\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"GcTransaction\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -993,12 +1041,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\GcTransaction");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"GcTransaction");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\GcTransaction\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"GcTransaction\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("GcTransaction", "Success");
@@ -1019,7 +1067,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\ItemDiscount");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"ItemDiscount");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -1032,7 +1080,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
@@ -1049,7 +1097,7 @@ namespace FileReaderAPI.Controllers
 								DiscountKeyWipe = Convert.ToString(rec.discount_key_wipe),
 								DisUniformInd = Convert.ToString(rec.dis_uniform_id)
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(itemDiscountModel, "InsertItemDiscount");
 
 						}
@@ -1058,10 +1106,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "ItemDiscount");
 						GenerateActivityLog("ItemDiscount", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\ItemDiscount\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"ItemDiscount\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -1075,12 +1123,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\ItemDiscount");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"ItemDiscount");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\ItemDiscount\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"ItemDiscount\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("ItemDiscount", "Success");
@@ -1097,7 +1145,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DGRegion");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"DGRegion");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -1110,7 +1158,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
@@ -1121,7 +1169,7 @@ namespace FileReaderAPI.Controllers
 								CountryCode = Convert.ToString(rec.country_code),
 								PartnerCode = Convert.ToString(rec.partner_code),
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(dgRegionModel, "InsertDGRegion");
 
 						}
@@ -1130,10 +1178,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "DGRegion");
 						GenerateActivityLog("DGRegion", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\DGRegion\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"DGRegion\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -1147,12 +1195,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DGRegion");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"DGRegion");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\DGRegion\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"DGRegion\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("DGRegion", "Success");
@@ -1171,7 +1219,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DGArea");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"DGArea");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -1184,7 +1232,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
@@ -1196,7 +1244,7 @@ namespace FileReaderAPI.Controllers
 								AreaManager = Convert.ToString(rec.area_manager),
 								PartnerCode = Convert.ToString(rec.partner_code)
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(dgAreaModel, "InsertDGArea");
 
 						}
@@ -1205,10 +1253,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "DGArea");
 						GenerateActivityLog("DGArea", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\DGArea\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"DGArea\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -1222,12 +1270,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\DGArea");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"DGArea");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\DGArea\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"DGArea\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("DGArea", "Success");
@@ -1244,7 +1292,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\Tender");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"Tender");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -1257,7 +1305,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
@@ -1270,7 +1318,7 @@ namespace FileReaderAPI.Controllers
 								TenderAmountBc = Convert.ToInt32(rec.tender_amount_bc)
 
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(tenderModel, "InsertTender");
 
 						}
@@ -1279,10 +1327,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Tender");
 						GenerateActivityLog("Tender", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\Tender\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"Tender\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -1296,12 +1344,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\Tender");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"Tender");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\Tender\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"Tender\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("Tender", "Success");
@@ -1318,7 +1366,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\Transaction");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"Transaction");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -1326,12 +1374,12 @@ namespace FileReaderAPI.Controllers
 					try
 					{
 
-
+						
 
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
@@ -1360,7 +1408,7 @@ namespace FileReaderAPI.Controllers
 								TbvFlag = Convert.ToString(rec.tbvflag),
 								PartnerCode = Convert.ToString(rec.partner_code)
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(transactionModel, "InsertTransactions");
 
 						}
@@ -1369,10 +1417,15 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "Transaction");
 						GenerateActivityLog("Transaction", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\Transaction\Errored\" + file.Name);
+						if(file.Exists)
+                        {
+							file.CopyTo(baseFolder + @"Transaction\Errored\" + file.Name);
+						}
+						
 						return BadRequest(ex.Message);
 					}
 				}
@@ -1386,12 +1439,15 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\Transaction");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"Transaction");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
-
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\Transaction\Archive\" + file.Name);
+				if(file.Exists)
+                {
+					file.MoveTo(baseFolder + @"Transaction\Archive\" + file.Name);
+				}
+				
 
 			}
 			GenerateActivityLog("Transaction", "Success");
@@ -1409,7 +1465,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\TenderCredit");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"TenderCredit");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -1422,7 +1478,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
@@ -1443,7 +1499,7 @@ namespace FileReaderAPI.Controllers
 								PartnerCode = Convert.ToString(rec.partner_code)
 
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(TenderCreditModel, "InsertTenderCredit");
 
 						}
@@ -1452,10 +1508,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "TenderCredit");
 						GenerateActivityLog("TenderCredit", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\TenderCredit\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"TenderCredit\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -1469,12 +1525,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\TenderCredit");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"TenderCredit");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\TenderCredit\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"TenderCredit\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("TenderCredit", "Success");
@@ -1492,7 +1548,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\LuItemPromotion");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"LuItemPromotion");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -1505,7 +1561,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
@@ -1516,7 +1572,7 @@ namespace FileReaderAPI.Controllers
 
 
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(luItemPromotion, "InsertLuItemPromotion");
 
 						}
@@ -1525,10 +1581,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "LuItemPromotion");
 						GenerateActivityLog("LuItemPromotion", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\LuItemPromotion\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"LuItemPromotion\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -1542,12 +1598,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\LuItemPromotion");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"LuItemPromotion");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\LuItemPromotion\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"LuItemPromotion\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("LuItemPromotion", "Success");
@@ -1564,7 +1620,7 @@ namespace FileReaderAPI.Controllers
 
 
 
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\LuTender");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"LuTender");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -1577,18 +1633,18 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 
 
 							LuTenderModel luTenderModel = new LuTenderModel()
 							{
-								TenderCode = Convert.ToInt32(rec.tender_code),
+								TenderCode = Convert.ToString(rec.tender_code),
 								TenderDesc = Convert.ToString(rec.tender_desc),
 
 
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(luTenderModel, "InsertLuTender");
 
 						}
@@ -1597,10 +1653,10 @@ namespace FileReaderAPI.Controllers
 					catch (Exception ex)
 					{
 
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "LuTender");
 						GenerateActivityLog("LuTender", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\LuTender\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"LuTender\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -1614,12 +1670,12 @@ namespace FileReaderAPI.Controllers
 			}
 
 
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\LuTender");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"LuTender");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
 
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\LuTender\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"LuTender\Archive\" + file.Name);
 
 			}
 			GenerateActivityLog("LuTender", "Success");
@@ -1634,17 +1690,17 @@ namespace FileReaderAPI.Controllers
 		{
 			try
 			{
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\SaleItem");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"SaleItem");
 				FileInfo[] files = d.GetFiles("*.parquet");
-
+				var reader = new ChoParquetReader();
 				foreach (FileInfo file in files)
 				{
 					try
 					{
-						var reader = new ChoParquetReader(file.FullName);
+						reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 							SaleItemModel saleItemModel = new SaleItemModel()
 							{
@@ -1687,30 +1743,33 @@ namespace FileReaderAPI.Controllers
 								GriReceiptType = Convert.ToString(rec.gri_receipt_type),
 								PartnerCode = Convert.ToString(rec.partner_code)
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
+							
 							modelInsertHelper.RunSPForModel(saleItemModel, "InsertSaleItem");
+							
 						}
 					}
 					catch (Exception ex)
 					{
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						reader.Dispose();
+						file.MoveTo(baseFolder + @"SaleItem\Errored\" + file.Name);
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "SaleItem");
 						GenerateActivityLog("SaleItem", "Error");
-						file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\SaleItem\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
 			}
 			catch (Exception ex)
 			{
+				
 				GenerateActivityLog("SaleItem", "Error");
 				return BadRequest("Errored with " + ex.Message);
 			}
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\SaleItem");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"SaleItem");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\SaleItem\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"SaleItem\Archive\" + file.Name);
 			}
 			GenerateActivityLog("SaleItem", "Success");
 			return Ok("Successful");
@@ -1723,7 +1782,7 @@ namespace FileReaderAPI.Controllers
 		{
 			try
 			{
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\LuSundry");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"LuSundry");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -1733,7 +1792,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 							LuSundryModel luSundryModel = new LuSundryModel()
 							{
@@ -1742,16 +1801,16 @@ namespace FileReaderAPI.Controllers
 								SundryType = Convert.ToString(rec.sundry_type),
 
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(luSundryModel, "InsertLuSundry");
 						}
 					}
 					catch (Exception ex)
 					{
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "LuSundry");
 						GenerateActivityLog("LuSundry", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\LuSundry\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"LuSundry\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -1761,11 +1820,11 @@ namespace FileReaderAPI.Controllers
 				GenerateActivityLog("LuSundry", "Error");
 				return BadRequest("Errored with " + ex.Message);
 			}
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\LuSundry");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"LuSundry");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\LuSundry\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"LuSundry\Archive\" + file.Name);
 			}
 			GenerateActivityLog("LuSundry", "Success");
 			return Ok("Successful");
@@ -1778,7 +1837,7 @@ namespace FileReaderAPI.Controllers
 		{
 			try
 			{
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\LuVoid");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"LuVoid");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -1788,7 +1847,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 						
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 							LuVoidModel luVoidModel = new LuVoidModel()
 							{
@@ -1796,16 +1855,16 @@ namespace FileReaderAPI.Controllers
 								VoidDesc = Convert.ToString(rec.void_desc),
 
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(luVoidModel, "InsertLuVoid");
 						}
 					}
 					catch (Exception ex)
 					{
 						
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "LuVoid");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\LuVoid\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"LuVoid\Errored\" + file.Name);
 						GenerateActivityLog("LuVoid", "Error");
 						return BadRequest(ex.Message);
 						
@@ -1817,11 +1876,11 @@ namespace FileReaderAPI.Controllers
 				GenerateActivityLog("LuVoid", "Error");
 				return BadRequest("Errored with " + ex.Message);
 			}
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\LuVoid");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"LuVoid");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\LuVoid\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"LuVoid\Archive\" + file.Name);
 			}
 			GenerateActivityLog("LuVoid", "Success");
 			return Ok("Successful");
@@ -1834,7 +1893,7 @@ namespace FileReaderAPI.Controllers
 		{
 			try
 			{
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\SafeCountDetailsEvent");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"SafeCountDetailsEvent");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -1844,7 +1903,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 							SafeCountDetailsEventModel safeCountDetailsEventModel = new SafeCountDetailsEventModel()
 							{
@@ -1858,16 +1917,16 @@ namespace FileReaderAPI.Controllers
 								PayrollNumber = Convert.ToInt64(rec.payroll_number)
 
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(safeCountDetailsEventModel, "InsertSafeCountDetailsEvent");
 						}
 					}
 					catch (Exception ex)
 					{
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "SafeCountDetailsEvent");
 						GenerateActivityLog("SafeCountDetailsEvent", "Error");
-						file.CopyTo(@"C:\JoJo Maman Bébé\NEXT\SafeCountDetailsEvent\Errored\" + file.Name);
+						file.CopyTo(baseFolder + @"SafeCountDetailsEvent\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -1877,15 +1936,102 @@ namespace FileReaderAPI.Controllers
 				GenerateActivityLog("SafeCountDetailsEvent", "Error");
 				return BadRequest("Errored with " + ex.Message);
 			}
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\SafeCountDetailsEvent");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"SafeCountDetailsEvent");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\SafeCountDetailsEvent\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"SafeCountDetailsEvent\Archive\" + file.Name);
 			}
 			GenerateActivityLog("SafeCountDetailsEvent", "Success");
 			return Ok("Successful");
 		}
+
+
+		[HttpGet]
+		[Route("ConvertBankingCount")]
+
+		public IHttpActionResult ConvertBankCount()
+		{
+			try
+			{
+
+
+
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"BankingCountDetailsEvent");
+				FileInfo[] files = d.GetFiles("*.parquet");
+
+				foreach (FileInfo file in files)
+				{
+					try
+					{
+
+
+
+						var reader = new ChoParquetReader(file.FullName);
+						dynamic rec;
+
+						while ((rec = reader.Read()) != null)
+						{
+
+
+							BankingCountDetailsEventModel bankingCountDetailsEvent = new BankingCountDetailsEventModel()
+							{
+								BankingCountDetailsEventKey = Convert.ToInt32(rec.banking_count_details_event_key),
+								StoreNumber = Convert.ToInt32(rec.store_number),
+								Date = Convert.ToString(rec.date),
+								Time = Convert.ToString(rec.time),
+								CountType = Convert.ToInt32(rec.count_type),
+								CountedValue = Convert.ToInt32(rec.counted_value),
+								CurrencyCode = Convert.ToString(rec.currency_code),
+								PayrollNumber = Convert.ToInt64(rec.payroll_number)
+
+
+
+							};
+
+							modelInsertHelper.RunSPForModel(bankingCountDetailsEvent, "InsertBankingCountDetailsEvent");
+
+						}
+
+					}
+										
+					catch (Exception ex)
+								{
+									
+									modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "BankingCountDetailsEvent");
+									GenerateActivityLog("BankingCountDetailsEvent", "Error");
+									file.CopyTo(baseFolder + @"BankingCountDetailsEvent\Errored\" + file.Name);
+									return BadRequest(ex.Message);
+								}
+							}
+						}
+								catch (Exception ex)
+								{
+									GenerateActivityLog("BankingCountDetailsEvent", "Error");
+									return BadRequest("Errored with " + ex.Message);
+					}
+					DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"BankingCountDetailsEvent");
+					FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
+					foreach (FileInfo file in files2)
+					{
+						file.MoveTo(baseFolder + @"BankingCountDetailsEvent\Archive\" + file.Name);
+					}
+					GenerateActivityLog("BankingCountDetailsEvent", "Success");
+					return Ok("Successful");
+							}
+
+		
+
+
+
+
+
+
+
+
+
+
+
 
 		[HttpGet]
 		[Route("SundryBranch")]
@@ -1894,7 +2040,7 @@ namespace FileReaderAPI.Controllers
 		{
 			try
 			{
-				DirectoryInfo d = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\SundryBranch");
+				DirectoryInfo d = new DirectoryInfo(baseFolder + @"SundryBranch");
 				FileInfo[] files = d.GetFiles("*.parquet");
 
 				foreach (FileInfo file in files)
@@ -1904,7 +2050,7 @@ namespace FileReaderAPI.Controllers
 						var reader = new ChoParquetReader(file.FullName);
 						dynamic rec;
 
-						while ((rec = reader.Read()) != null || stopReader == true)
+						while ((rec = reader.Read()) != null)
 						{
 							SundryBranchModel sundryBranchModel = new SundryBranchModel()
 							{
@@ -1918,16 +2064,16 @@ namespace FileReaderAPI.Controllers
 								SundryQuantity = Convert.ToInt32(rec.sundry_quantity)
 
 							};
-							ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+							
 							modelInsertHelper.RunSPForModel(sundryBranchModel, "InsertSundryBranch");
 						}
 					}
 					catch (Exception ex)
 					{
-						ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+						
 						modelInsertHelper.InsertErrorLog(ex.Message, ex.StackTrace, file.FullName, "SundryBranch");
 						GenerateActivityLog("SundryBranch", "Error");
-						file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\SundryBranch\Errored\" + file.Name);
+						file.MoveTo(baseFolder + @"SundryBranch\Errored\" + file.Name);
 						return BadRequest(ex.Message);
 					}
 				}
@@ -1937,15 +2083,17 @@ namespace FileReaderAPI.Controllers
 				GenerateActivityLog("SundryBranch", "Error");
 				return BadRequest("Errored with " + ex.Message);
 			}
-			DirectoryInfo directoryInfo = new DirectoryInfo(@"C:\JoJo Maman Bébé\NEXT\SundryBranch");
+			DirectoryInfo directoryInfo = new DirectoryInfo(baseFolder + @"SundryBranch");
 			FileInfo[] files2 = directoryInfo.GetFiles("*.parquet");
 			foreach (FileInfo file in files2)
 			{
-				file.MoveTo(@"C:\JoJo Maman Bébé\NEXT\SundryBranch\Archive\" + file.Name);
+				file.MoveTo(baseFolder + @"SundryBranch\Archive\" + file.Name);
 			}
 			GenerateActivityLog("SundryBranch", "Success");
 			return Ok("Successful");
 		}
+
+
 
 		private void GenerateActivityLog(string routename, string result)
         {
@@ -1957,9 +2105,11 @@ namespace FileReaderAPI.Controllers
 			    
 			};
 
-			ModelInsertHelper modelInsertHelper = new ModelInsertHelper();
+			
 			modelInsertHelper.RunSPForModel(apiLog, "UpdateActivityLog");
         }
+
+
 
 	}
 

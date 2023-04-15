@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="utf-8"?>
+<definitions xmlns:tns="urn:microsoft-dynamics-schemas/codeunit/NextTransactionWS" targetNamespace="urn:microsoft-dynamics-schemas/codeunit/NextTransactionWS" xmlns="http://schemas.xmlsoap.org/wsdl/">
+  <types>
+    <schema elementFormDefault="qualified" targetNamespace="urn:microsoft-dynamics-schemas/codeunit/NextTransactionWS" xmlns="http://www.w3.org/2001/XMLSchema">
+      <element name="SetActionCoding">
+        <complexType>
+          <sequence>
+            <element minOccurs="1" maxOccurs="1" name="pAction" type="int" />
+            <element minOccurs="1" maxOccurs="1" name="pEncoding" type="int" />
+            <element minOccurs="1" maxOccurs="1" name="pRequest_In" type="string" />
+          </sequence>
+        </complexType>
+      </element>
+      <element name="SetActionCoding_Result">
+        <complexType>
+          <sequence>
+            <element minOccurs="1" maxOccurs="1" name="pRequest_In" type="string" />
+          </sequence>
+        </complexType>
+      </element>
+      <element name="GetCodingResult">
+        <complexType>
+          <sequence />
+        </complexType>
+      </element>
+      <element name="GetCodingResult_Result">
+        <complexType>
+          <sequence>
+            <element minOccurs="1" maxOccurs="1" name="return_value" type="string" />
+          </sequence>
+        </complexType>
+      </element>
+      <element name="InsertNextTransactionHeader">
+        <complexType>
+          <sequence>
+            <element minOccurs="1" maxOccurs="1" name="_receiptNo" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_branchCode" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_staffID" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_date" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_time" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_grossAmount" type="decimal" />
+            <element minOccurs="1" maxOccurs="1" name="_discountAmount" type="decimal" />
+            <element minOccurs="1" maxOccurs="1" name="_payment" type="decimal" />
+          </sequence>
+        </complexType>
+      </element>
+      <element name="InsertNextTransactionHeader_Result">
+        <complexType>
+          <sequence />
+        </complexType>
+      </element>
+      <element name="InsertNextSalesEntries">
+        <complexType>
+          <sequence>
+            <element minOccurs="1" maxOccurs="1" name="_receiptNo" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_branchCode" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_staffID" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_date" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_time" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_grossAmount" type="decimal" />
+            <element minOccurs="1" maxOccurs="1" name="_discountAmount" type="decimal" />
+            <element minOccurs="1" maxOccurs="1" name="_payment" type="decimal" />
+            <element minOccurs="1" maxOccurs="1" name="_qty" type="int" />
+            <element minOccurs="1" maxOccurs="1" name="_nextItemOpt" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_saleItemNo" type="int" />
+            <element minOccurs="1" maxOccurs="1" name="_vatPercentage" type="decimal" />
+          </sequence>
+        </complexType>
+      </element>
+      <element name="InsertNextSalesEntries_Result">
+        <complexType>
+          <sequence />
+        </complexType>
+      </element>
+      <element name="InsertNextPaymentEntries">
+        <complexType>
+          <sequence>
+            <element minOccurs="1" maxOccurs="1" name="_tenderType" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_tenderAmount" type="decimal" />
+            <element minOccurs="1" maxOccurs="1" name="_amountInCurrency" type="decimal" />
+            <element minOccurs="1" maxOccurs="1" name="_date" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_time" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_salesPerson" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_storeNo" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_receiptNo" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_saleItemNo" type="int" />
+            <element minOccurs="1" maxOccurs="1" name="_NavCardCode" type="string" />
+          </sequence>
+        </complexType>
+      </element>
+      <element name="InsertNextPaymentEntries_Result">
+        <complexType>
+          <sequence />
+        </complexType>
+      </element>
+      <element name="RemoveNextTransactions">
+        <complexType>
+          <sequence>
+            <element minOccurs="1" maxOccurs="1" name="_receiptNo" type="int" />
+          </sequence>
+        </complexType>
+      </element>
+      <element name="RemoveNextTransactions_Result">
+        <complexType>
+          <sequence />
+        </complexType>
+      </element>
+      <element name="CheckTransactionHeader">
+        <complexType>
+          <sequence>
+            <element minOccurs="1" maxOccurs="1" name="transactionNumber" type="int" />
+          </sequence>
+        </complexType>
+      </element>
+      <element name="CheckTransactionHeader_Result">
+        <complexType>
+          <sequence />
+        </complexType>
+      </element>
+      <element name="InsertNextCharges">
+        <complexType>
+          <sequence>
+            <element minOccurs="1" maxOccurs="1" name="_receiptNo" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_branchCode" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_date" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_time" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_amount" type="decimal" />
+            <element minOccurs="1" maxOccurs="1" name="_sundryCode" type="string" />
+          </sequence>
+        </complexType>
+      </element>
+      <element name="InsertNextCharges_Result">
+        <complexType>
+          <sequence />
+        </complexType>
+      </element>
+      <element name="CreateNextStatement">
+        <complexType>
+          <sequence>
+            <element minOccurs="1" maxOccurs="1" name="_TransactionDate" type="string" />
+            <element minOccurs="1" maxOccurs="1" name="_StoreNumber" type="int" />
+            <element minOccurs="1" maxOccurs="1" name="_Bank" type="decimal" />
+          </sequence>
+        </complexType>
+      </element>
+      <element name="CreateNextStatement_Result">
+        <complexType>
+          <sequence />
+        </complexType>
+      </element>
+    </schema>
+  </types>
+  <message name="SetActionCoding">
+    <part name="parameters" element="tns:SetActionCoding" />
+  </message>
+  <message name="SetActionCoding_Result">
+    <part name="parameters" element="tns:SetActionCoding_Result" />
+  </message>
+  <message name="GetCodingResult">
+    <part name="parameters" element="tns:GetCodingResult" />
+  </message>
+  <message name="GetCodingResult_Result">
+    <part name="parameters" element="tns:GetCodingResult_Result" />
+  </message>
+  <message name="InsertNextTransactionHeader">
+    <part name="parameters" element="tns:InsertNextTransactionHeader" />
+  </message>
+  <message name="InsertNextTransactionHeader_Result">
+    <part name="parameters" element="tns:InsertNextTransactionHeader_Result" />
+  </message>
+  <message name="InsertNextSalesEntries">
+    <part name="parameters" element="tns:InsertNextSalesEntries" />
+  </message>
+  <message name="InsertNextSalesEntries_Result">
+    <part name="parameters" element="tns:InsertNextSalesEntries_Result" />
+  </message>
+  <message name="InsertNextPaymentEntries">
+    <part name="parameters" element="tns:InsertNextPaymentEntries" />
+  </message>
+  <message name="InsertNextPaymentEntries_Result">
+    <part name="parameters" element="tns:InsertNextPaymentEntries_Result" />
+  </message>
+  <message name="RemoveNextTransactions">
+    <part name="parameters" element="tns:RemoveNextTransactions" />
+  </message>
+  <message name="RemoveNextTransactions_Result">
+    <part name="parameters" element="tns:RemoveNextTransactions_Result" />
+  </message>
+  <message name="CheckTransactionHeader">
+    <part name="parameters" element="tns:CheckTransactionHeader" />
+  </message>
+  <message name="CheckTransactionHeader_Result">
+    <part name="parameters" element="tns:CheckTransactionHeader_Result" />
+  </message>
+  <message name="InsertNextCharges">
+    <part name="parameters" element="tns:InsertNextCharges" />
+  </message>
+  <message name="InsertNextCharges_Result">
+    <part name="parameters" element="tns:InsertNextCharges_Result" />
+  </message>
+  <message name="CreateNextStatement">
+    <part name="parameters" element="tns:CreateNextStatement" />
+  </message>
+  <message name="CreateNextStatement_Result">
+    <part name="parameters" element="tns:CreateNextStatement_Result" />
+  </message>
+  <portType name="NextTransactionWS_Port">
+    <operation name="SetActionCoding">
+      <input name="SetActionCoding" message="tns:SetActionCoding" />
+      <output name="SetActionCoding_Result" message="tns:SetActionCoding_Result" />
+    </operation>
+    <operation name="GetCodingResult">
+      <input name="GetCodingResult" message="tns:GetCodingResult" />
+      <output name="GetCodingResult_Result" message="tns:GetCodingResult_Result" />
+    </operation>
+    <operation name="InsertNextTransactionHeader">
+      <input name="InsertNextTransactionHeader" message="tns:InsertNextTransactionHeader" />
+      <output name="InsertNextTransactionHeader_Result" message="tns:InsertNextTransactionHeader_Result" />
+    </operation>
+    <operation name="InsertNextSalesEntries">
+      <input name="InsertNextSalesEntries" message="tns:InsertNextSalesEntries" />
+      <output name="InsertNextSalesEntries_Result" message="tns:InsertNextSalesEntries_Result" />
+    </operation>
+    <operation name="InsertNextPaymentEntries">
+      <input name="InsertNextPaymentEntries" message="tns:InsertNextPaymentEntries" />
+      <output name="InsertNextPaymentEntries_Result" message="tns:InsertNextPaymentEntries_Result" />
+    </operation>
+    <operation name="RemoveNextTransactions">
+      <input name="RemoveNextTransactions" message="tns:RemoveNextTransactions" />
+      <output name="RemoveNextTransactions_Result" message="tns:RemoveNextTransactions_Result" />
+    </operation>
+    <operation name="CheckTransactionHeader">
+      <input name="CheckTransactionHeader" message="tns:CheckTransactionHeader" />
+      <output name="CheckTransactionHeader_Result" message="tns:CheckTransactionHeader_Result" />
+    </operation>
+    <operation name="InsertNextCharges">
+      <input name="InsertNextCharges" message="tns:InsertNextCharges" />
+      <output name="InsertNextCharges_Result" message="tns:InsertNextCharges_Result" />
+    </operation>
+    <operation name="CreateNextStatement">
+      <input name="CreateNextStatement" message="tns:CreateNextStatement" />
+      <output name="CreateNextStatement_Result" message="tns:CreateNextStatement_Result" />
+    </operation>
+  </portType>
+  <binding name="NextTransactionWS_Binding" type="tns:NextTransactionWS_Port">
+    <binding transport="http://schemas.xmlsoap.org/soap/http" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+    <operation name="SetActionCoding">
+      <operation soapAction="urn:microsoft-dynamics-schemas/codeunit/NextTransactionWS:SetActionCoding" style="document" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      <input name="SetActionCoding">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </input>
+      <output name="SetActionCoding_Result">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </output>
+    </operation>
+    <operation name="GetCodingResult">
+      <operation soapAction="urn:microsoft-dynamics-schemas/codeunit/NextTransactionWS:GetCodingResult" style="document" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      <input name="GetCodingResult">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </input>
+      <output name="GetCodingResult_Result">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </output>
+    </operation>
+    <operation name="InsertNextTransactionHeader">
+      <operation soapAction="urn:microsoft-dynamics-schemas/codeunit/NextTransactionWS:InsertNextTransactionHeader" style="document" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      <input name="InsertNextTransactionHeader">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </input>
+      <output name="InsertNextTransactionHeader_Result">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </output>
+    </operation>
+    <operation name="InsertNextSalesEntries">
+      <operation soapAction="urn:microsoft-dynamics-schemas/codeunit/NextTransactionWS:InsertNextSalesEntries" style="document" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      <input name="InsertNextSalesEntries">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </input>
+      <output name="InsertNextSalesEntries_Result">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </output>
+    </operation>
+    <operation name="InsertNextPaymentEntries">
+      <operation soapAction="urn:microsoft-dynamics-schemas/codeunit/NextTransactionWS:InsertNextPaymentEntries" style="document" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      <input name="InsertNextPaymentEntries">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </input>
+      <output name="InsertNextPaymentEntries_Result">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </output>
+    </operation>
+    <operation name="RemoveNextTransactions">
+      <operation soapAction="urn:microsoft-dynamics-schemas/codeunit/NextTransactionWS:RemoveNextTransactions" style="document" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      <input name="RemoveNextTransactions">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </input>
+      <output name="RemoveNextTransactions_Result">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </output>
+    </operation>
+    <operation name="CheckTransactionHeader">
+      <operation soapAction="urn:microsoft-dynamics-schemas/codeunit/NextTransactionWS:CheckTransactionHeader" style="document" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      <input name="CheckTransactionHeader">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </input>
+      <output name="CheckTransactionHeader_Result">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </output>
+    </operation>
+    <operation name="InsertNextCharges">
+      <operation soapAction="urn:microsoft-dynamics-schemas/codeunit/NextTransactionWS:InsertNextCharges" style="document" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      <input name="InsertNextCharges">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </input>
+      <output name="InsertNextCharges_Result">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </output>
+    </operation>
+    <operation name="CreateNextStatement">
+      <operation soapAction="urn:microsoft-dynamics-schemas/codeunit/NextTransactionWS:CreateNextStatement" style="document" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      <input name="CreateNextStatement">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </input>
+      <output name="CreateNextStatement_Result">
+        <body use="literal" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+      </output>
+    </operation>
+  </binding>
+  <service name="NextTransactionWS">
+    <port name="NextTransactionWS_Port" binding="tns:NextTransactionWS_Binding">
+      <address location="http://s1004180.jojo.internal:10187/NAV2017Cutover-WS/WS/JoJo%20Maman%20Bebe%20Ltd/Codeunit/NextTransactionWS" xmlns="http://schemas.xmlsoap.org/wsdl/soap/" />
+    </port>
+  </service>
+</definitions>

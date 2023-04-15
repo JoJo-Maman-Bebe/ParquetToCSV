@@ -13,7 +13,7 @@ namespace FileReaderAPI.Models
 		public string Time { get; set; }
 		public int CountType { get; set; }
 		public int CountedValue { get; set; }
-		public int CurrencyCode { get; set; }
+		public string CurrencyCode { get; set; }
 		public long PayrollNumber { get; set; }
 	}
 }
